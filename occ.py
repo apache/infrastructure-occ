@@ -21,6 +21,10 @@ import asfpy.pubsub
 import yaml
 import subprocess
 import socket
+import pwd
+import sys
+import os
+import getpass
 
 ME = socket.gethostname()
 TMPL_FAILURE = ME + """ failed to reconfigure due to the following error(s):
@@ -30,6 +34,35 @@ Error message: %s
 
 Please fix this error before service can resume.
 """
+
+
+def run_as(username=getpass.getuser(), args=()):
+    """ Run a command as a specific user """
+    pw_record = pwd.getpwnam(username)
+    user_name = pw_record.pw_name
+    user_uid = pw_record.pw_uid
+    user_gid = pw_record.pw_gid
+    env = os.environ.copy()
+    env['HOME'] = pw_record.pw_dir
+    env['LOGNAME'] = user_name
+    env['PWD'] = os.getcwd()
+    env['USER'] = username
+    print("Running command %s as user %s..." % (" ".join(args), username))
+    process = subprocess.Popen(
+        args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    result = process.communicate(timeout=30)
+    if process.returncode == 0:
+        return
+    else:
+        raise subprocess.CalledProcessError(returncode=process.returncode, cmd=args, output=result[0].decode('utf-8'))
+
+
+def change_user(user_uid, user_gid):
+    def result():
+        os.setgid(user_gid)
+        os.setuid(user_uid)
+    return result
 
 
 def parse_commit(payload, config):
@@ -49,28 +82,34 @@ def parse_commit(payload, config):
                         break
             if matches:
                 oncommit = subdata.get('oncommit')
+                runas = subdata.get('runas', getpass.getuser())
                 if oncommit:
                     print("Found a matching payload, preparing to execute command '%s':" % oncommit)
                     if isinstance(oncommit, str):
+                        blamelist = subdata.get('blamelist')
+                        blamesubject = subdata.get('blamesubject', "OCC execution failure")
                         try:
-                            subprocess.check_output((oncommit,), stderr=subprocess.STDOUT)
+                            run_as(runas, (oncommit,))
                             print("Command executed successfully")
                         except subprocess.CalledProcessError as e:
                             print("on-commit command failed with exit code %d!" % e.returncode)
-                            blamelist = subdata.get('blamelist')
-                            blamesubject = subdata.get('blamesubject', "OCC execution failure")
                             if blamelist:
                                 print("Sending error details to %s" % blamelist)
                                 asfpy.messaging.mail(recipient=blamelist, subject=blamesubject, message=TMPL_FAILURE % (e.returncode, e.output))
                         except FileNotFoundError:
                             print("Could not find script to execute; file not found!")
-                            blamelist = subdata.get('blamelist')
-                            blamesubject = subdata.get('blamesubject', "OCC execution failure")
                             if blamelist:
                                 print("Sending error details to %s" % blamelist)
                                 asfpy.messaging.mail(recipient=blamelist, subject=blamesubject,
                                                      message=TMPL_FAILURE % (-1, "Script file %s not found" % oncommit))
-
+                        except KeyError:
+                            print("Could not execute command as %s - user not found??" % runas)
+                            asfpy.messaging.mail(recipient=blamelist, subject=blamesubject,
+                                                 message=TMPL_FAILURE % (-1, "Username %s not found" % runas))
+                        except subprocess.SubprocessError:
+                            print("Subprocess error - likely could not change to user %s" % runas)
+                            asfpy.messaging.mail(recipient=blamelist, subject=blamesubject,
+                                                 message=TMPL_FAILURE % (-1, "Subprocess error while trying to run as user %s" % runas))
 
 def main():
     print("Loading occ.yaml")
