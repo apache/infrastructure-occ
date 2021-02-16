@@ -1,0 +1,11 @@
+pubsub:
+  url: https://pubsub.apache.org:2070/commit
+  user: foo
+  pass: bar
+
+#subscriptions:
+#  foo:
+#    topics: git/commit/infrastructure-foobar
+#    oncommit: /x1/foo/bar.sh
+#    blamelist: someone@example.org
+#    blamesubject: OCC reconfiguration failure
