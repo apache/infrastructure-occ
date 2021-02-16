@@ -1,0 +1,11 @@
+[Unit]
+Description=On-Commit Commands Client App
+ 
+[Service]
+Type=simple
+WorkingDirectory=/opt/occ
+ExecStart=/usr/local/bin/pipenv run python3 occ.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
