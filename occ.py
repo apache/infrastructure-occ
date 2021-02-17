@@ -22,7 +22,6 @@ import yaml
 import subprocess
 import socket
 import pwd
-import sys
 import os
 import getpass
 
@@ -36,9 +35,24 @@ Please fix this error before service can resume.
 """
 
 
+class CommandException(Exception):
+    reason: str
+    exitcode: int
+
+    def __init__(self, reason, exitcode=0):
+        self.reason = reason
+        self.exitcode = exitcode
+
+
 def run_as(username=getpass.getuser(), args=()):
     """ Run a command as a specific user """
-    pw_record = pwd.getpwnam(username)
+    if not args:
+        return   # Nothing to do? boooo
+    try:
+        pw_record = pwd.getpwnam(username)
+    except KeyError:
+        print("Could not execute command as %s - user not found??" % username)
+        raise CommandException("Subprocess error - could not run command as non-existent user %s" % username, 7)
     user_name = pw_record.pw_name
     user_uid = pw_record.pw_uid
     user_gid = pw_record.pw_gid
@@ -48,14 +62,25 @@ def run_as(username=getpass.getuser(), args=()):
     env['PWD'] = os.getcwd()
     env['USER'] = username
     print("Running command %s as user %s..." % (" ".join(args), username))
-    process = subprocess.Popen(
-        args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-    result = process.communicate(timeout=30)
+    try:
+        process = subprocess.Popen(
+            args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        )
+        result = process.communicate(timeout=30)
+    except FileNotFoundError:
+        print("Could not find script or executable to run, %s" % args[0])
+        raise CommandException("Could not find executable '%s'" % args[0], 1)
+    except subprocess.TimeoutExpired:
+        print("Execution timed out")
+        raise CommandException("Subprocess error - execution of command timed out", 2)
+    except subprocess.SubprocessError:
+        print("Subprocess error - likely could not change to user %s" % username)
+        raise CommandException("Subprocess error - unable to change to user %s for running command (permission denied?)" % username, 7)
     if process.returncode == 0:
         return
     else:
-        raise subprocess.CalledProcessError(returncode=process.returncode, cmd=args, output=result[0].decode('utf-8'))
+        print("on-commit command failed with exit code %d!" % process.returncode)
+        raise CommandException(result[0].decode('utf-8'), process.returncode)
 
 
 def change_user(user_uid, user_gid):
@@ -91,25 +116,12 @@ def parse_commit(payload, config):
                         try:
                             run_as(runas, (oncommit,))
                             print("Command executed successfully")
-                        except subprocess.CalledProcessError as e:
-                            print("on-commit command failed with exit code %d!" % e.returncode)
+                        except CommandException as e:
+                            print("on-commit command failed with exit code %d!" % e.exitcode)
                             if blamelist:
                                 print("Sending error details to %s" % blamelist)
-                                asfpy.messaging.mail(recipient=blamelist, subject=blamesubject, message=TMPL_FAILURE % (e.returncode, e.output))
-                        except FileNotFoundError:
-                            print("Could not find script to execute; file not found!")
-                            if blamelist:
-                                print("Sending error details to %s" % blamelist)
-                                asfpy.messaging.mail(recipient=blamelist, subject=blamesubject,
-                                                     message=TMPL_FAILURE % (-1, "Script file %s not found" % oncommit))
-                        except KeyError:
-                            print("Could not execute command as %s - user not found??" % runas)
-                            asfpy.messaging.mail(recipient=blamelist, subject=blamesubject,
-                                                 message=TMPL_FAILURE % (-1, "Username %s not found" % runas))
-                        except subprocess.SubprocessError:
-                            print("Subprocess error - likely could not change to user %s" % runas)
-                            asfpy.messaging.mail(recipient=blamelist, subject=blamesubject,
-                                                 message=TMPL_FAILURE % (-1, "Subprocess error while trying to run as user %s" % runas))
+                                asfpy.messaging.mail(recipient=blamelist, subject=blamesubject, message=TMPL_FAILURE % (e.exitcode, e.reason))
+
 
 def main():
     print("Loading occ.yaml")
