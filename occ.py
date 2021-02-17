@@ -107,12 +107,17 @@ def parse_commit(payload, config):
                 oncommit = subdata.get('oncommit')
                 runas = subdata.get('runas', getpass.getuser())
                 if oncommit:
-                    print("Found a matching payload, preparing to execute command '%s':" % oncommit)
-                    if isinstance(oncommit, str):
+                    cmd_args = ()
+                    if isinstance(oncommit, str) and oncommit:
+                        cmd_args = (oncommit,)
+                    elif isinstance(oncommit, list):
+                        cmd_args = oncommit
+                    if cmd_args:
+                        print("Found a matching payload, preparing to execute command '%s':" % " ".join(cmd_args))
                         blamelist = subdata.get('blamelist')
                         blamesubject = subdata.get('blamesubject', "OCC execution failure")
                         try:
-                            run_as(runas, (oncommit,))
+                            run_as(runas, cmd_args)
                             print("Command executed successfully")
                         except CommandException as e:
                             print("on-commit command failed with exit code %d!" % e.exitcode)
