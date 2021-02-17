@@ -76,9 +76,7 @@ def run_as(username=getpass.getuser(), args=()):
     except subprocess.SubprocessError:
         print("Subprocess error - likely could not change to user %s" % username)
         raise CommandException("Subprocess error - unable to change to user %s for running command (permission denied?)" % username, 7)
-    if process.returncode == 0:
-        return
-    else:
+    if process.returncode != 0:
         print("on-commit command failed with exit code %d!" % process.returncode)
         raise CommandException(result[0].decode('utf-8'), process.returncode)
 
