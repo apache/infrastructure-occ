@@ -98,7 +98,7 @@ def parse_commit(payload, config):
             matches = True
             if sub_changedir:  # If we require changes within a certain dir in the repo..
                 matches = False
-                changes = payload.get('commit', {}).get('changed')
+                changes = payload.get('commit', {}).get('files', [])
                 for change in changes.keys():
                     if change.startswith(sub_changedir):
                         matches = True
