@@ -18,12 +18,15 @@
 
 import asfpy.messaging
 import asfpy.pubsub
+import asfpy.syslog
 import yaml
 import subprocess
 import socket
 import pwd
 import os
 import getpass
+
+print = asfpy.syslog.Printer(stdout=True, identity="occ")
 
 ME = socket.gethostname()
 TMPL_FAILURE = ME + """ failed to reconfigure due to the following error(s):
