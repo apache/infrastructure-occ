@@ -124,6 +124,9 @@ def parse_commit(payload, config):
                             if blamelist:
                                 print("Sending error details to %s" % blamelist)
                                 asfpy.messaging.mail(recipient=blamelist, subject=blamesubject, message=TMPL_FAILURE % (e.exitcode, e.reason))
+                    if subdata.get('skiprest') == True:
+                        print("Skiprest enabled, skipping any other commands that may fire from this commit")
+                        break
 
 
 def main():
