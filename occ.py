@@ -98,8 +98,13 @@ def parse_commit(payload, config):
             matches = True
             if sub_changedir:  # If we require changes within a certain dir in the repo..
                 matches = False
-                changes = payload.get('commit', {}).get('files', [])
-                for change in changes.keys():
+                changed_files = []
+                commit = payload.get('commit', {})
+                if commit and 'changed' in commit:
+                    changed_files = commit.get('changed').keys()  # svn syntax
+                elif commit and 'files' in commit:
+                    changed_files = commit.get('files')  # git syntax
+                for change in changed_files:
                     if change.startswith(sub_changedir):
                         matches = True
                         break
