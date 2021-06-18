@@ -73,6 +73,9 @@ def run_as(username=getpass.getuser(), args=()):
     except FileNotFoundError:
         print("Could not find script or executable to run, %s" % args[0])
         raise CommandException("Could not find executable '%s'" % args[0], 1)
+    except PermissionError:
+        print("Permission denied while trying to run %s" % args[0])
+        raise CommandException("Got permission denied while trying to run '%s'" % args[0], 1)
     except subprocess.TimeoutExpired:
         print("Execution timed out")
         raise CommandException("Subprocess error - execution of command timed out", 2)
