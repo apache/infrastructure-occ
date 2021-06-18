@@ -75,7 +75,7 @@ def run_as(username=getpass.getuser(), args=()):
         raise CommandException("Could not find executable '%s'" % args[0], 1)
     except PermissionError:
         print("Permission denied while trying to run %s" % args[0])
-        raise CommandException("Got permission denied while trying to run '%s'" % args[0], 1)
+        raise CommandException("Got permission denied while trying to run '%s'" % args[0], 13)
     except subprocess.TimeoutExpired:
         print("Execution timed out")
         raise CommandException("Subprocess error - execution of command timed out", 2)
