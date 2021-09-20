@@ -118,11 +118,16 @@ def parse_commit(payload, config):
                 oncommit = subdata.get('oncommit')
                 runas = subdata.get('runas', getpass.getuser())
                 if oncommit:
-                    cmd_args = ()
+                    cmd_args = []
                     if isinstance(oncommit, str) and oncommit:
-                        cmd_args = (oncommit,)
+                        cmd_args = [oncommit]
                     elif isinstance(oncommit, list):
-                        cmd_args = oncommit
+                        for cmd_arg in oncommit:
+                            if cmd_arg == "$branch":
+                                cmd_arg = payload.get("commit", {}).get("ref", "??")
+                            if cmd_arg == "$hash":
+                                cmd_arg = payload.get("commit", {}).get("hash", "??")
+                            cmd_args.append(cmd_arg)
                     if cmd_args:
                         print("Found a matching payload, preparing to execute command '%s':" % " ".join(cmd_args))
                         blamelist = subdata.get('blamelist')
