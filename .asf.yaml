@@ -6,3 +6,4 @@ github:
     - occ
     - infrastructure
     - debug
+    - auth
