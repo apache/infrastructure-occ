@@ -67,9 +67,12 @@ def run_as(username=getpass.getuser(), args=()):
     print("Running command %s as user %s..." % (" ".join(args), username))
     try:
         process = subprocess.Popen(
-            args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT, universal_newlines=True
         )
-        result = process.communicate(timeout=30)
+        stdout_data, stderr_data = process.communicate(timeout=30)
+        if stdout_data:
+            print(stdout_data)    
     except FileNotFoundError:
         print("Could not find script or executable to run, %s" % args[0])
         raise CommandException("Could not find executable '%s'" % args[0], 1)
