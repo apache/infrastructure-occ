@@ -19,9 +19,9 @@
 import asfpy.messaging
 import asfpy.pubsub
 import asfpy.syslog
+import asfpy.whoami
 import yaml
 import subprocess
-import socket
 import pwd
 import os
 import getpass
@@ -30,7 +30,7 @@ import sys
 
 print = asfpy.syslog.Printer(stdout=True, identity="occ")
 
-ME = socket.gethostname()
+ME = asfpy.whoami.whoami()
 TMPL_FAILURE = ME + """ failed to reconfigure due to the following error(s):
 
 Return code: %d
