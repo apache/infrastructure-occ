@@ -138,7 +138,7 @@ async def parse_commit(payload, config):
                         blamelist = subdata.get('blamelist')
                         blamesubject = subdata.get('blamesubject', "OCC execution failure")
                         try:
-                            run_as(runas, cmd_args)
+                            await run_as(runas, cmd_args)
                             print("Command executed successfully")
                         except CommandException as e:
                             print("on-commit command failed with exit code %d!" % e.exitcode)
