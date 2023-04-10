@@ -17,6 +17,8 @@ subscriptions:
     oncommit: [/x1/git/run-git-trigger.sh, $branch, $hash]
     blamelist: notify@example.org
     blamesubject: Git trigger failure
+    runas: username (optional)
+    skiprest: true (optional - don't process any further commands matching this commit)
   svn-change-in-dir:
     topics: svn/commit/somedir
     changedir: some/subdir
