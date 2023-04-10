@@ -102,7 +102,7 @@ def change_user(user_uid, user_gid):
 async def parse_commit(payload, config):
     if 'stillalive' in payload:  # Ping, Pong...
         return
-    for subkey, subdata in config.get('subscriptions', {}).items():
+    for _subkey, subdata in config.get('subscriptions', {}).items():
         sub_topics = subdata.get('topics').split('/')
         sub_changedir = subdata.get('changedir')
         if all(topic in payload['pubsub_topics'] for topic in sub_topics):
@@ -124,7 +124,7 @@ async def parse_commit(payload, config):
                 runas = subdata.get('runas', getpass.getuser())
                 if oncommit:
                     cmd_args = []
-                    if isinstance(oncommit, str) and oncommit:
+                    if isinstance(oncommit, str):
                         cmd_args = [oncommit]
                     elif isinstance(oncommit, list):
                         for cmd_arg in oncommit:
