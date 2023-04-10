@@ -14,7 +14,7 @@ pubsub:
 subscriptions:
   git-change:
     topics: git/commit/some-git-repo-name
-    oncommit: /x1/git/run-git-trigger.sh
+    oncommit: [/x1/git/run-git-trigger.sh, $branch, $hash]
     blamelist: notify@example.org
     blamesubject: Git trigger failure
   svn-change-in-dir:
