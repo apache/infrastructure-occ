@@ -3,7 +3,7 @@
 version: '3.3'
 services:
     occ:
-        image: occ
+        build: https://github.com/nser77/infrastructure-occ.git#main:docker/build
         volumes:
             -  /etc/occ:/etc/occ
         cap_drop:
