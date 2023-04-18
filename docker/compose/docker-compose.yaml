@@ -1,0 +1,10 @@
+# skeleton 0.0.1
+
+version: '3.3'
+services:
+    occ:
+        image: occ
+        volumes:
+            -  /etc/occ:/etc/occ
+        cap_drop:
+            - ALL
