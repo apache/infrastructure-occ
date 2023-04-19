@@ -16,6 +16,8 @@
 # limitations under the License.
 """On-Commit-Commands - a simple pubsub client that runs a command on commit activity"""
 
+from argparse import ArgumentParser
+
 import asfpy.messaging
 import asfpy.pubsub
 import asfpy.syslog
@@ -27,7 +29,6 @@ import os
 import getpass
 import asyncio
 import sys
-import argparse
 
 print = asfpy.syslog.Printer(stdout=True, identity="occ")
 
@@ -152,7 +153,7 @@ async def parse_commit(payload, config):
 
 
 def ocCli():
-    parser = argparse.ArgumentParser(description='infrastructure-occ')
+    parser = ArgumentParser(description='infrastructure-occ')
     parser.add_argument('--config-file', type=str, default="occ.yaml", help='YAML configuration file. Default is: occ.yaml')
     return parser.parse_args()
 
