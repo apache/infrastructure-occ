@@ -16,6 +16,8 @@
 # limitations under the License.
 """On-Commit-Commands - a simple pubsub client that runs a command on commit activity"""
 
+from argparse import ArgumentParser
+
 import asfpy.messaging
 import asfpy.pubsub
 import asfpy.syslog
@@ -69,12 +71,12 @@ async def run_as(username=getpass.getuser(), args=()):
     print("Running command %s as user %s..." % (" ".join(args), username))
     try:
         process = subprocess.Popen(
-            args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, 
+            args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, universal_newlines=True
         )
         stdout_data, stderr_data = process.communicate(timeout=30)
         if stdout_data:
-            print(stdout_data)    
+            print(stdout_data)
     except FileNotFoundError:
         print("Could not find script or executable to run, %s" % args[0])
         raise CommandException("Could not find executable '%s'" % args[0], 1)
@@ -150,9 +152,16 @@ async def parse_commit(payload, config):
                         break
 
 
+def ocCli():
+    parser = ArgumentParser(description='infrastructure-occ')
+    parser.add_argument('--config-file', type=str, default="occ.yaml", help='YAML configuration file. Default is: occ.yaml')
+    return parser.parse_args()
+
+
 async def main():
-    print("Loading occ.yaml")
-    cfg = yaml.safe_load(open('occ.yaml'))
+    args = ocCli()
+    cfg = yaml.safe_load(open(args.config_file))
+    print("%s loaded." % args.config_file)
     print("Listening to pyPubSub stream at %s" % cfg['pubsub']['url'])
     async for payload in asfpy.pubsub.listen(cfg['pubsub']['url'], username=cfg['pubsub']['user'], password=cfg['pubsub']['pass']):
         await parse_commit(payload, cfg)

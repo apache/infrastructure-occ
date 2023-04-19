@@ -1,0 +1,10 @@
+# skeleton 0.0.1
+
+version: '3.3'
+services:
+    occ:
+        build: https://github.com/nser77/infrastructure-occ.git#main:docker/build
+        volumes:
+            -  /etc/occ:/etc/occ
+        cap_drop:
+            - ALL
