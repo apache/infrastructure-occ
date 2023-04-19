@@ -1,3 +1,2 @@
 PyYAML>=5.4.1
 asfpy>=0.45
-argparse>=1.4.0
