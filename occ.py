@@ -153,13 +153,14 @@ async def parse_commit(payload, config):
 
 def ocCli():
     parser = argparse.ArgumentParser(description='infrastructure-occ')
-    parser.add_argument('--config-file', type=str, help='YAML configuration file.')
+    parser.add_argument('--config-file', type=str, default="occ.yaml", help='YAML configuration file. Default is: occ.yaml')
     return parser.parse_args()
+
 
 async def main():
     args = ocCli()
-    print("Loading %s" % args.config_file)
     cfg = yaml.safe_load(open(args.config_file))
+    print("%s loaded." % args.config_file)
     print("Listening to pyPubSub stream at %s" % cfg['pubsub']['url'])
     async for payload in asfpy.pubsub.listen(cfg['pubsub']['url'], username=cfg['pubsub']['user'], password=cfg['pubsub']['pass']):
         await parse_commit(payload, cfg)
