@@ -72,7 +72,7 @@ async def run_as(username=getpass.getuser(), args=()):
             args, preexec_fn=change_user(user_uid, user_gid), cwd=os.getcwd(), env=env, stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT, universal_newlines=True
         )
-        stdout_data, stderr_data = process.communicate(timeout=30)
+        stdout_data, stderr_data = process.communicate(timeout=180)
         if stdout_data:
             print(stdout_data)    
     except FileNotFoundError:
