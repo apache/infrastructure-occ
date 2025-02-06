@@ -89,7 +89,7 @@ async def run_as(username=getpass.getuser(), args=()):
         raise CommandException("Subprocess error - unable to change to user %s for running command (permission denied?)" % username, 7)
     if process.returncode != 0:
         print("on-commit command failed with exit code %d!" % process.returncode)
-        raise CommandException(stderr_data.decode('utf-8'), process.returncode)
+        raise CommandException(stdout_data, process.returncode)
 
 
 def change_user(user_uid, user_gid):
